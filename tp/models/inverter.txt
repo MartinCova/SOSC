@@ -3,15 +3,27 @@
 .include 45nm_bulk.txt
 .option TEMP=27C
 
+* Définition des paramètres
+.param Vdd=1.8;    * Tension d'alimentation
+.param Vin=1.8;    * Tension d'entrée
+.param L=45n;     * Longueur du transistor (L)
+.param Wn=90n;    * Largeur du NMOS (Wn)
+.param Wp=90n;    * Largeur du PMOS (Wp)
+.param Cload=1e-12;  * Capacité de charge sur la sortie
 
-Vpower VD 0 1.5
-Vgnd VS 0 0
-Vgate in VS PULSE (0 1.5 100p 1p 1p 1u 2u)
-MNO out in VS VS nmos W=45nm L=45nm
-MPO out in VD VS pmos W=45nm L=45nm
-.tran 3p 600ps
+* Définition du circuit de l'inverseur
+M1 out a vdd vdd pmos L=L W=Wp;   * PMOS
+M2 out a 0 0 nmos L=L W=Wn;       * NMOS
+* Résistances et tensions
+Vdd vdd 0 DC Vdd;                                  * Source de tension pour l'alimentation
+Vin in 0 PULSE (0 Vin 100p 1p 1p 1u 2u);     * Source de tension d'entrée (peut être ajustée pour simulation)
+
+
+* Connexion de la sortie
+Cload out 0 Cload;   * Capacité de charge sur la sortie (ajustable selon le besoin)
+.tran 1n 2.5u
 .control
     run
-    plot in out
+    gnuplot a out
 .endc
 .end
