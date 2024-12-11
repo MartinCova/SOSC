@@ -1,0 +1,17 @@
+* /Users/martincova/Documents/Informatique/SOSC_env/SOSC/tp/models/inverter.txt
+
+.include 45nm_bulk.txt
+.option TEMP=27C
+
+
+Vpower VD 0 1.5
+Vgnd VS 0 0
+Vgate in VS PULSE (0 1.5 100p 1p 1p 1u 2u)
+MNO out in VS VS nmos W=45nm L=45nm
+MPO out in VD VS pmos W=45nm L=45nm
+.tran 3p 600ps
+.control
+    run
+    plot in out
+.endc
+.end

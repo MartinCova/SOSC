@@ -39,8 +39,8 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
             borders: Optional[dict[str, tuple[float, float]]] = None,
     ):
         # TODO : Path to netlist
-        raise NotImplementedError("Path to netlist is missing")
-        inverter_path = ...
+        #raise NotImplementedError("Path to netlist is missing")
+        inverter_path = "Documents/Informatique/SOSC_env/models/interver.txt"
 
 
         # TODO : Setup all useful class attributes you need in your functions
