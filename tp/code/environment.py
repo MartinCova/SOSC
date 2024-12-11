@@ -40,8 +40,7 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
             borders: Optional[dict[str, tuple[float, float]]] = None,
     ):
         # TODO : Path to netlist
-        raise NotImplementedError("Path to netlist is missing")
-        inverter_path = ...
+        inverter_path = "../models/inverter_45nm.txt"
 
 
         # TODO : Setup all useful class attributes you need in your functions
@@ -63,16 +62,16 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         #        self._hidden_parameters. The second one must exist in
         #        all cases, if you don't have hidden parameters set it
         #        to empty : self._hidden_parameters = {}
-        raise NotImplementedError("Parameters filtration is not written")
-
+        self._parameters = {"Wn": 90e-9, "Wp": 90e-9}
+        self._hidden_parameters = {"Vdd": 1.8, "Vin": 1.8, "L": 45e-9, "Cload": 1e-12}
 
         # TODO : Define the action space : self._action_space
         #        Use gym spaces for that, remember that the
         #        actions are dictionaries associating
         #        parameters to their new values (don't forget
         #        the limits)
-        raise NotImplementedError("Action space is not defined")
-
+        self._action_space = gym.spaces.Dict({"Wn": gym.spaces.Box(low=45e-9, high=1e-6, dtype=np.float64),
+                                              "Wp": gym.spaces.Box(low=45e-9, high=1e-6, dtype=np.float64)})
 
         # TODO : define the observation space : self.observation_space
         #        As for action space, use gym spaces to define it, the
