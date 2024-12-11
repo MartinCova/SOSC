@@ -32,7 +32,6 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         Path to the ouput file for the formatted netlist.
     """
 
-
     def __init__(
             self,
             widths: bool = True,
