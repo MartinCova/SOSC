@@ -12,12 +12,12 @@
 .param Cload=1e-12;                             * Capacité de charge sur la sortie
 
 * Définition du circuit de l'inverseur
-M1 out in vdd vdd pmos L=L W=Wp;            * PMOS
-M2 out in 0 0 nmos L=L W=Wn;                * NMOS
+M1 out a vdd vdd pmos L=L W=Wp;            * PMOS
+M2 out a 0 0 nmos L=L W=Wn;                * NMOS
 
 * Résistances et tensions
 Vdd vdd 0 DC Vdd;                             * Source de tension pour l'alimentation
-Vin in 0 PULSE (0 Vin 100p 1p 1p 1u 2u);      * Source de tension d'entrée (peut être ajustée pour simulation)
+Vin a 0 PULSE (0 Va 100p 1p 1p 1u 2u);      * Source de tension d'entrée (peut être ajustée pour simulation)
 
 * Connexion de la sortie
 Cload out 0 Cload;                            * Capacité de charge sur la sortie (ajustable selon le besoin)

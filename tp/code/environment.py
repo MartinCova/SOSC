@@ -40,7 +40,7 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
             borders: Optional[dict[str, tuple[float, float]]] = None,
     ):
         # TODO : Path to netlist
-        inverter_path = "../models/inverter_45nm.txt"
+        self._netlist = "../models/inverter_45nm.txt"
 
 
         # TODO : Setup all useful class attributes you need in your functions
