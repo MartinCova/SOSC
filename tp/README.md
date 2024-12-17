@@ -37,13 +37,13 @@ Il est **fortement** recommendé d'utiliser un environnement virtuel
 python, un nouvel environnement peut être généré à l'aide de la 
 commande suivante :
 ```shell
-python3 -m venv env_name
+python3 -m venv SOSC_env
 ```
 
 Un dossier `env_name` est alors généré (choisissez un nom plus 
 parlant). L'environnement peut être activé à l'aide de la commande :
 ```shell
-source env_name/bin/activate
+source SOSC_env/bin/activate
 ```
 
 Le nom de l'environnement apparait alors devant le prompt entre 

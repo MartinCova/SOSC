@@ -17,16 +17,23 @@ M2 y a 0 0 nmos L=L W=Wn;                * NMOS
 
 * Résistances et tensions
 Vdd vdd 0 DC Vdd;                             * Source de tension pour l'alimentation
-Vin a 0 PULSE (0 Vdd 100p 1p 1p 1u 2u);      * Source de tension d'entrée (peut être ajustée pour simulation)
+Vin a 0 PULSE (0 Vdd 0 1p 1p 1u 2u);      * Source de tension d'entrée (peut être ajustée pour simulation)
 
 * Connexion de la sortie
-Cload y 0 Cload;                            * Capacité de charge sur la sortie (ajustable selon le besoin)
+Cl y 0 Cload;                            * Capacité de charge sur la sortie (ajustable selon le besoin)
 
-.tran 1n 2.5u
+.tran 1n 2.5u 1p
+
+*mesures
+*.meas tran delay TRIG v(a) VAL=0.9999*vdd FALL=1 TARG v(y) VAL=0.5*Vdd RISE=1
+
+*.meas tran i_max MAX I(Vdd)
+*.meas tran v_max MAX V(Vdd)
+*.meas tran power PARAM=(i_max*v_max)
 
 .control
     run
-    plot a y
+    gnuplot ../output/results a y i(Vdd)*Vdd
 .endc
 
 .end

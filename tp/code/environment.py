@@ -47,7 +47,7 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
 
 
         # TODO : Setup all useful class attributes you need in your functions
-
+        self._label = []
 
         # TODO : Filter parameters
         #        By default, all .param in the netlists are considered
@@ -67,8 +67,8 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         #        to empty : self._hidden_parameters = {}
         self._parameters = {}
         self._hidden_parameters = {}
+        self._netlist_content = f""
         with open(self._netlist_template) as f:
-            self._netlist_content = f.read()
             for line in f:
                 if ".param " in line:
                     p = line.split(".param ")[1]
@@ -76,7 +76,17 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
                         self._parameters[p.split("=")[0]] = float(p.split("=")[1].split(";")[0])
                     else:
                         self._hidden_parameters[p.split("=")[0]] = float(p.split("=")[1].split(";")[0])
+
+                    self._netlist_content += ".param " + p.split("=")[0] +" = {" + p.split("=")[0] + "};\r\n"
+                else:
+                    self._netlist_content += line
+                    if "plot" in line:
+                        label = line.strip().split(" ")[2:]
             f.close()
+        for l in label:
+            self._label.append("T")
+            self._label.append(l)
+        #print(self._netlist_content)
         #print(self._parameters)
         #print(self._hidden_parameters)
         #self._parameters = {"Wn": 90e-9, "Wp": 90e-9}
@@ -139,17 +149,26 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         #           ...
         #        }
 
-        run_exe("../bin/ngspice", "-b", "-o out.txt",self._netlist)
-        #data = read_wrdata_file(self.get_output_path("out.txt"))
+        run_exe("../bin/ngspice", "-b",  self._netlist)
+        #"-b", "-o", "../output/out.csv",
+
+        os.remove("../output/results.plt")
+        with open("../output/results.data", "r+") as f:
+            txt = f.read()
+            f.seek(0)
+            f.write(" ".join(self._label) + "\n" + txt)
+        data = read_wrdata_file("../output/results.data", erase=False)
+        idx = (data["a"] != 1.8).idxmax()
+        t = data["T"][idx]
+        t_50 = data["T"][(data["y"].loc[idx:] < 0.9).idxmin()]
+        delay = t_50 - t
 
         obs = {
-            "delay": data.get("delay", 0.0),
-            "power": data.get("power", 0.0),
-            "energy": data.get("energy", 0.0),
+            "delay": delay,
+            "power": max(data[self._label[-1]]),
         }
 
         return obs
-
 
     def _get_info(self):
         return {}
