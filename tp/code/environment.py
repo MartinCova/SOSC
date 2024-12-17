@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -40,7 +41,9 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
             borders: Optional[dict[str, tuple[float, float]]] = None,
     ):
         # TODO : Path to netlist
-        self._netlist = "../models/inverter_45nm.txt"
+        self._netlist = "../models/inverter_45nm_opt.txt"
+        self._netlist_template = "../models/inverter_45nm.txt"
+        self._generated_files = "out.txt"
 
 
         # TODO : Setup all useful class attributes you need in your functions
@@ -62,22 +65,40 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         #        self._hidden_parameters. The second one must exist in
         #        all cases, if you don't have hidden parameters set it
         #        to empty : self._hidden_parameters = {}
-        self._parameters = {"Wn": 90e-9, "Wp": 90e-9}
-        self._hidden_parameters = {"Vdd": 1.8, "Vin": 1.8, "L": 45e-9, "Cload": 1e-12}
+        self._parameters = {}
+        self._hidden_parameters = {}
+        with open(self._netlist_template) as f:
+            self._netlist_content = f.read()
+            for line in f:
+                if ".param " in line:
+                    p = line.split(".param ")[1]
+                    if p.split("=")[0].lower()[0] == "w":
+                        self._parameters[p.split("=")[0]] = float(p.split("=")[1].split(";")[0])
+                    else:
+                        self._hidden_parameters[p.split("=")[0]] = float(p.split("=")[1].split(";")[0])
+            f.close()
+        #print(self._parameters)
+        #print(self._hidden_parameters)
+        #self._parameters = {"Wn": 90e-9, "Wp": 90e-9}
+        #self._hidden_parameters = {"Vdd": 1.8, "Vin": 1.8, "L": 45e-9, "Cload": 1e-12}
 
         # TODO : Define the action space : self._action_space
         #        Use gym spaces for that, remember that the
         #        actions are dictionaries associating
         #        parameters to their new values (don't forget
         #        the limits)
-        self._action_space = gym.spaces.Dict({"Wn": gym.spaces.Box(low=45e-9, high=1e-6, dtype=np.float64),
-                                              "Wp": gym.spaces.Box(low=45e-9, high=1e-6, dtype=np.float64)})
+        self._action_space = gym.spaces.Dict({id: gym.spaces.Box(low=45e-9, high=1e-6, dtype=np.float64) for id in self._parameters})
+        #{"Wn": gym.spaces.Box(low=45e-9, high=1e-6, dtype=np.float64),
+        #"Wp": gym.spaces.Box(low=45e-9, high=1e-6, dtype=np.float64)})
+        #print(self._action_space)
 
         # TODO : define the observation space : self.observation_space
         #        As for action space, use gym spaces to define it, the
         #        observations are a dictionary associating each metric
         #        to its value
-        raise NotImplementedError("Observation space is not defined")
+        self._observation_space = gym.spaces.Dict({
+            "delay": gym.spaces.Discrete(10),
+            "power": gym.spaces.Discrete(10)})
 
     def _get_obs(self) -> dict:
         r"""
@@ -117,7 +138,17 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         #           "metric_2": compute_metric_2(data),
         #           ...
         #        }
-        raise NotImplementedError("NGSpiceEnvironment._get_ops method not implemented")
+
+        run_exe("../bin/ngspice", "-b", "-o out.txt",self._netlist)
+        #data = read_wrdata_file(self.get_output_path("out.txt"))
+
+        obs = {
+            "delay": data.get("delay", 0.0),
+            "power": data.get("power", 0.0),
+            "energy": data.get("energy", 0.0),
+        }
+
+        return obs
 
 
     def _get_info(self):
@@ -275,3 +306,9 @@ class CmosInverterEnvironmentDiscrete(gym.Env):
     def close(self):
         super().close()
         self._env.close()
+
+
+if __name__ == "__main__":
+
+    env = CmosInverterEnvironment()
+    env._get_obs()
