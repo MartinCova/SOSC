@@ -43,11 +43,11 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         # TODO : Path to netlist
         self._netlist = "../models/inverter_45nm_opt.txt"
         self._netlist_template = "../models/inverter_45nm.txt"
-        self._generated_files = "out.txt"
 
 
         # TODO : Setup all useful class attributes you need in your functions
         self._label = []
+        self._closed = True
 
         # TODO : Filter parameters
         #        By default, all .param in the netlists are considered
@@ -97,7 +97,7 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         #        actions are dictionaries associating
         #        parameters to their new values (don't forget
         #        the limits)
-        self._action_space = gym.spaces.Dict({id: gym.spaces.Box(low=45e-9, high=1e-6, dtype=np.float64) for id in self._parameters})
+        self.action_space = gym.spaces.Dict({id: gym.spaces.Box(low=45e-9, high=1e-6, shape=(), dtype=np.float64) for id in self._parameters})
         #{"Wn": gym.spaces.Box(low=45e-9, high=1e-6, dtype=np.float64),
         #"Wp": gym.spaces.Box(low=45e-9, high=1e-6, dtype=np.float64)})
         #print(self._action_space)
@@ -106,9 +106,11 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         #        As for action space, use gym spaces to define it, the
         #        observations are a dictionary associating each metric
         #        to its value
-        self._observation_space = gym.spaces.Dict({
-            "delay": gym.spaces.Discrete(10),
-            "power": gym.spaces.Discrete(10)})
+        self.observation_space = gym.spaces.Dict({
+            "delay": gym.spaces.Box(low=0, high=1, dtype=np.float64)
+            #"power": gym.spaces.Discrete(10)
+        })
+
 
     def _get_obs(self) -> dict:
         r"""
@@ -152,20 +154,22 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         run_exe("../bin/ngspice", "-b",  self._netlist)
         #"-b", "-o", "../output/out.csv",
 
-        os.remove("../output/results.plt")
+        #os.remove("../output/results.plt")
         with open("../output/results.data", "r+") as f:
             txt = f.read()
             f.seek(0)
             f.write(" ".join(self._label) + "\n" + txt)
+            f.close()
+
         data = read_wrdata_file("../output/results.data", erase=False)
-        idx = (data["a"] != 1.8).idxmax()
+        idx = (data["a"] != self._hidden_parameters["Vdd"]).idxmax()
         t = data["T"][idx]
-        t_50 = data["T"][(data["y"].loc[idx:] < 0.9).idxmin()]
+        t_50 = data["T"][(data["y"].loc[idx:] < 0.5*self._hidden_parameters["Vdd"]).idxmin()]
         delay = t_50 - t
 
         obs = {
-            "delay": delay,
-            "power": max(data[self._label[-1]]),
+            "delay": delay
+            #"power": max(data[self._label[-1]]),
         }
 
         return obs
@@ -198,6 +202,7 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         super().reset(seed=seed)
 
         params = self.action_space.sample()
+        #print(params)
 
         self._parameters.update(params)
 
@@ -206,7 +211,7 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
 
         return obs, info
 
-    def _compute_reward(self, *_) -> float:
+    def _compute_reward(self, obs) -> float:
         r"""
         Compute the reward.
 
@@ -218,7 +223,7 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         # TODO : Write this method and return the reward, you are
         #        free to replace *args by any number of arguments you
         #        need
-        raise NotImplementedError("Method _compute_reward is not implemented")
+        return 1/obs["delay"]
 
     def step(self, action: dict) -> tuple[dict, float, bool, bool, dict]:
         r"""
@@ -259,8 +264,7 @@ class CmosInverterEnvironment(NGSpiceEnvironment):
         obs = self._get_obs()
 
         # TODO : Pass the arguments needed to compute the reward
-        reward = self._compute_reward(...)
-        raise NotImplementedError("Call to reward has not been implemented")
+        reward = self._compute_reward(obs)
 
         info = self._get_info()
 
@@ -294,12 +298,14 @@ class CmosInverterEnvironmentDiscrete(gym.Env):
         #            [param_1_action, param_2_action, ...]
         #        ⠀
         #        Write the new action space.
-        raise NotImplementedError("Discrete action space is not defined")
+        self._action_order = self._env._parameters.keys()
+        self.action_space = gym.spaces.MultiDiscrete([3]*len(self._env.action_space.keys()))
 
         # TODO : The issue with SB3 and Dict spaces is the same for
         #        observation space. Adapt it in the same way as action
         #        space.
-        raise NotImplementedError("Discrete observation space is not defined")
+        self._observations_order = self._env.observation_space.keys()
+        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(len(self._env.observation_space.keys()), ), dtype=np.float64)
 
     @property
     def _parameters(self):
@@ -320,7 +326,16 @@ class CmosInverterEnvironmentDiscrete(gym.Env):
         #        observation to the SB3 valid format before return.
         #        ⠀
         #        Don't forget anything :)
-        raise NotImplementedError("Discrete step method not implemented")
+
+        continous_action = {}
+        step = 10e-9
+        #print(action)
+        for i, act_name in enumerate(self._action_order):
+            continous_action[act_name] = (action[i]-1)*step + self._env._parameters[act_name]
+
+        obs, rewards, terminated, truncated, info = self._env.step(continous_action)
+        #print(rewards)
+        return [obs[key] for key in self._observations_order], rewards, terminated, truncated, info
 
     def close(self):
         super().close()
@@ -329,5 +344,30 @@ class CmosInverterEnvironmentDiscrete(gym.Env):
 
 if __name__ == "__main__":
 
-    env = CmosInverterEnvironment()
-    env._get_obs()
+    """env = CmosInverterEnvironmentDiscrete()
+    print(env.step({"Wp":0, "Wn":0}), env._env._parameters)
+    print(env.step({"Wp": 1, "Wn": 1}), env._env._parameters)"""
+    from stable_baselines3 import PPO
+
+    # 1. Créez une instance de votre environnement.
+    env = CmosInverterEnvironmentDiscrete()
+
+    # 3. Créez l'algorithme PPO
+    model = PPO("MlpPolicy", env, verbose=1)
+
+    # 4. Entraînez le modèle
+    model.learn(total_timesteps=1000, progress_bar=True)
+
+    # 5. Sauvegardez le modèle entraîné
+    model.save("ppo_cmos_inverter")
+
+    # 6. Pour évaluer le modèle après l'entraînement
+    obs, info = env.reset()
+    for i in range(1000):
+        action, _states = model.predict(obs)
+        obs, rewards, dones, truncated, info = env.step(action)
+        if dones or truncated:
+            break
+
+    # 7. Afficher les récompenses pour voir les performances
+    print("Récompense finale:", rewards)

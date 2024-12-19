@@ -7,8 +7,8 @@
 .param Vdd = 1.8;
 .param Vin = 1.8;
 .param L = 4.5e-08;
-.param Wn = 9e-08;
-.param Wp = 9e-08;
+.param Wn = 3.0571625989695294e-07;
+.param Wp = 9.07920147483294e-07;
 .param Cload = 1e-12;
 
 * Définition du circuit de l'inverseur

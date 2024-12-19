@@ -6,9 +6,9 @@
 * Définition des paramètres
 .param Vdd=1.8;                                 * Tension d'alimentation
 .param Vin=1.8;                                 * Tension d'entrée
-.param L=45e-9;                                   * Longueur du transistor (L)
-.param Wn=90e-9;                                  * Largeur du NMOS (Wn)
-.param Wp=90e-9;                                  * Largeur du PMOS (Wp)
+.param L=45e-9;                                 * Longueur du transistor (L)
+.param Wn=90e-9;                                * Largeur du NMOS (Wn)
+.param Wp=90e-9;                                * Largeur du PMOS (Wp)
 .param Cload=1e-12;                             * Capacité de charge sur la sortie
 
 * Définition du circuit de l'inverseur

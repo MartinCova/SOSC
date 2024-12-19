@@ -7,7 +7,7 @@ cwd=$(pwd)
 cd $temp
 
 
-python3 -m venv env
+python3 -m venv SOSC_env
 
 source env/bin/activate
 

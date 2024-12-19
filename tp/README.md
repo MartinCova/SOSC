@@ -54,7 +54,7 @@ cet environnement, notamment lors de l'installation de package.
 Les packages suivants sont requis ou complémentaires à la réalisation 
 du TP :
 ```shell
-python -m pip install --no-cache-dir stable-baselines3[extra] PySpice jupyterlab notebook seaborn packaging matplotlib pandas pytest tensorboard
+python3 -m pip install --no-cache-dir stable-baselines3[extra] PySpice jupyterlab notebook seaborn packaging matplotlib pandas pytest tensorboard
 ```
 
 
